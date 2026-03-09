@@ -132,7 +132,7 @@ Return ONLY a valid JSON object with these exact keys:
     }
 
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=300.0) as client:
             resp = await client.post(
                 f"{OLLAMA_BASE_URL}/api/generate",
                 json=ollama_payload,
