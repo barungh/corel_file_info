@@ -2,22 +2,22 @@ name: cdr-analyzer
 
 services:
   # ── FastAPI Backend ───────────────────────────────────────
+  # network_mode: host = backend shares the host network namespace.
+  # This means localhost:11434 directly reaches Ollama on the host
+  # with zero Docker bridge / iptables forwarding issues.
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: cdr-backend
-    ports:
-      - "8000:8000"
+    network_mode: host
     environment:
-      # Override: OLLAMA_BASE_URL=http://x.x.x.x:11434 docker compose up -d backend
-      # 172.18.0.1 = gateway of cdr-net bridge (the host, as seen by this container)
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://172.18.0.1:11434}
+      OLLAMA_BASE_URL: http://localhost:11434
     restart: unless-stopped
-    networks:
-      - cdr-net
 
   # ── Angular Frontend (Nginx) ──────────────────────────────
+  # Nginx proxies /api/ to port 8000 on the host gateway (172.18.0.1),
+  # which is where the host-networked backend is listening.
   frontend:
     build:
       context: ./frontend
