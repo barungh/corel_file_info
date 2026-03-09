@@ -10,11 +10,10 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # Reaches Ollama on the Docker host machine
-      OLLAMA_BASE_URL: http://host.docker.internal:11434
-    extra_hosts:
-      # Required on Linux for host.docker.internal to resolve
-      - "host.docker.internal:host-gateway"
+      # Override via: OLLAMA_BASE_URL=http://x.x.x.x:11434 docker compose up -d backend
+      # Default: Docker bridge gateway IP (works on Oracle Cloud Linux)
+      # If 172.17.0.1 doesn't work, run: ip route | grep docker0
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://172.17.0.1:11434}
     restart: unless-stopped
     networks:
       - cdr-net
