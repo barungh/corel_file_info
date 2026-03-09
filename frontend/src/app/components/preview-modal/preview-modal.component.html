@@ -1,0 +1,51 @@
+<div class="modal-backdrop" (click)="cancelled.emit()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal__header">
+      <h2 class="modal__title">Confirm Full File Upload</h2>
+      <button class="modal__close" (click)="cancelled.emit()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal__body">
+      <div class="modal__cols">
+        <!-- Preview column -->
+        <div class="modal__preview-col">
+          <h3 class="modal__section-title">Page 1 Preview</h3>
+          <div class="modal__preview-wrap">
+            <img *ngIf="result.meta?.previewUrl" [src]="result.meta!.previewUrl" alt="preview" class="modal__preview-img"/>
+            <div *ngIf="!result.meta?.previewUrl" class="modal__no-preview">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
+              No preview available
+            </div>
+          </div>
+        </div>
+
+        <!-- JSON Summary column -->
+        <div class="modal__summary-col">
+          <h3 class="modal__section-title">JSON Summary</h3>
+          <pre class="modal__json">{{ getSummaryJson() }}</pre>
+        </div>
+      </div>
+
+      <p class="modal__confirm-text">
+        Does the preview look correct? Clicking <strong>Upload</strong> will send the full <code>{{ result.file.name }}</code> file to the server.
+      </p>
+    </div>
+
+    <div class="modal__footer">
+      <button class="modal-btn modal-btn--cancel" (click)="cancelled.emit()">Cancel</button>
+      <button class="modal-btn modal-btn--confirm" (click)="confirmed.emit()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Upload File
+      </button>
+    </div>
+  </div>
+</div>

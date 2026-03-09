@@ -1,0 +1,72 @@
+/* ── Google Fonts ───────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ── CSS Custom Properties ──────────────────── */
+:root {
+  --bg-primary: #0b0d14;
+  --surface-sidebar: #0e1018;
+  --surface-card: #141620;
+  --surface-hover: #181c2a;
+  --surface-deep: #0d0f18;
+  --surface-modal: #14161f;
+
+  --border-subtle: rgba(255,255,255,0.07);
+  --border-accent: rgba(79,142,247,0.35);
+
+  --text-primary: #f0f2ff;
+  --text-secondary: #9ba5c0;
+  --text-muted: #5a6480;
+
+  --accent-primary: #4F8EF7;
+  --accent-purple: #7C5CBF;
+  --accent-danger: #ef4444;
+  --accent-warning: #f59e0b;
+
+  --gradient-accent: linear-gradient(135deg, #4F8EF7 0%, #7C5CBF 100%);
+  --gradient-text: linear-gradient(135deg, #a5c4ff 0%, #c4b0ff 100%);
+}
+
+/* ── Reset & Base ───────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* Subtle grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(79, 142, 247, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 142, 247, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body > * { position: relative; z-index: 1; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface-deep); }
+::-webkit-scrollbar-thumb { background: rgba(79,142,247,0.25); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(79,142,247,0.45); }
+
+/* Selection */
+::selection { background: rgba(79,142,247,0.3); color: var(--text-primary); }

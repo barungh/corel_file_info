@@ -1,0 +1,238 @@
+<div class="file-card" [class.card--done]="result.status === 'done'" [class.card--error]="result.status === 'error'">
+
+  <!-- Header -->
+  <div class="card__header">
+    <div class="card__icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+    </div>
+    <div class="card__title-area">
+      <h3 class="card__filename" [title]="result.file.name">{{ result.file.name }}</h3>
+      <span class="card__filesize">{{ fileSizeLabel }}</span>
+    </div>
+    <button class="card__remove" (click)="removeCard.emit(result.id)" title="Remove">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Progress Bar (while processing) -->
+  <div class="card__progress-wrap" *ngIf="result.status === 'processing'">
+    <div class="card__progress-bar">
+      <div class="card__progress-fill" [style.width.%]="progress"></div>
+    </div>
+    <span class="card__progress-text">Analyzing… {{ progress }}%</span>
+  </div>
+
+  <!-- Error state -->
+  <div class="card__error" *ngIf="result.status === 'error'">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    {{ result.error || 'Failed to parse file.' }}
+  </div>
+
+  <!-- Done state: metadata -->
+  <ng-container *ngIf="result.status === 'done' && result.meta">
+
+    <!-- Badges row -->
+    <div class="card__badges">
+      <!-- Compatibility badge -->
+      <span class="badge" [class.badge--ok]="result.compatible" [class.badge--error]="!result.compatible">
+        {{ result.compatible ? '✓ Compatible' : '✗ Incompatible' }}
+      </span>
+
+      <!-- Needs Eyelids badge -->
+      <span class="badge badge--warning" *ngIf="result.filenameInfo?.hasFinishingAlert">
+        👁 Needs Eyelids
+      </span>
+
+      <!-- Dimension mismatch badge -->
+      <span class="badge badge--mismatch" *ngIf="result.dimensionMismatch">
+        ⚠ Dim Mismatch
+      </span>
+
+      <!-- Already submitted / uploaded -->
+      <span class="badge badge--sent" *ngIf="result.summarySubmitted">✓ Summary Sent</span>
+      <span class="badge badge--uploaded" *ngIf="result.fileUploaded">✓ Uploaded</span>
+    </div>
+
+    <!-- Metadata Grid -->
+    <div class="card__meta">
+      <div class="meta-item">
+        <span class="meta-label">App Version</span>
+        <span class="meta-value" [class.meta-value--danger]="!result.compatible">{{ result.meta.appVersion }}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Pages</span>
+        <span class="meta-value">{{ result.meta.numPages || '—' }}</span>
+      </div>
+      <div class="meta-item" [class.meta-item--mismatch]="result.dimensionMismatch">
+        <span class="meta-label">Width</span>
+        <span class="meta-value">
+          {{ result.meta.widthInches.toFixed(3) }}&quot; &nbsp;/&nbsp; {{ result.meta.widthFeet.toFixed(4) }} ft
+        </span>
+      </div>
+      <div class="meta-item" [class.meta-item--mismatch]="result.dimensionMismatch">
+        <span class="meta-label">Height</span>
+        <span class="meta-value">
+          {{ result.meta.heightInches.toFixed(3) }}&quot; &nbsp;/&nbsp; {{ result.meta.heightFeet.toFixed(4) }} ft
+        </span>
+      </div>
+      <ng-container *ngIf="result.filenameInfo?.raw">
+        <div class="meta-item">
+          <span class="meta-label">Filename Dims</span>
+          <span class="meta-value" [class.meta-value--danger]="result.dimensionMismatch" [class.meta-value--ok]="!result.dimensionMismatch">
+            {{ result.filenameInfo!.raw }}&quot;
+          </span>
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- Preview image -->
+    <div class="card__preview" *ngIf="result.meta.previewUrl">
+      <button class="preview-toggle" (click)="togglePreview()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+        </svg>
+        {{ previewExpanded() ? 'Hide Preview' : 'Show Preview' }}
+      </button>
+      <div class="preview-image-wrap" [class.is-expanded]="previewExpanded()">
+        <img [src]="result.meta.previewUrl" alt="Page 1 preview" class="preview-image"/>
+      </div>
+    </div>
+
+    <!-- No preview message -->
+    <div class="card__preview card__preview--empty" *ngIf="!result.meta.previewUrl">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
+      No preview available
+    </div>
+
+    <!-- Actions -->
+    <div class="card__actions">
+      <button
+        class="btn btn--secondary"
+        (click)="sendSummary.emit(result)"
+        [disabled]="result.summarySubmitted"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+        {{ result.summarySubmitted ? 'Summary Sent' : 'Send Summary' }}
+      </button>
+      <button
+        class="btn btn--primary"
+        (click)="uploadFile.emit(result)"
+        [disabled]="result.fileUploaded"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        {{ result.fileUploaded ? 'Uploaded' : 'Upload Full File' }}
+      </button>
+    </div>
+
+    <!-- ── AI Analysis Section ──────────────────────────────── -->
+
+    <!-- Skeleton loader while AI is thinking -->
+    <div class="ai-section ai-section--loading" *ngIf="result.aiLoading">
+      <div class="ai-section__header">
+        <span class="ai-section__title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+          </svg>
+          AI Analyzing…
+        </span>
+      </div>
+      <div class="skeleton skeleton--qty"></div>
+      <div class="skeleton-chips">
+        <div class="skeleton skeleton--chip"></div>
+        <div class="skeleton skeleton--chip"></div>
+        <div class="skeleton skeleton--chip"></div>
+      </div>
+    </div>
+
+    <!-- AI error -->
+    <div class="ai-section ai-section--error" *ngIf="result.aiError && !result.aiLoading">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      AI unavailable: {{ result.aiError }}
+    </div>
+
+    <!-- AI results -->
+    <div class="ai-section" *ngIf="result.aiResult && !result.aiLoading">
+      <div class="ai-section__header">
+        <span class="ai-section__title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+          </svg>
+          AI Print Analysis
+        </span>
+      </div>
+
+      <!-- Total Qty — large badge -->
+      <div class="total-qty-badge">
+        <span class="total-qty-badge__icon">🖨</span>
+        <span class="total-qty-badge__value">{{ result.aiResult.total_qty }}</span>
+      </div>
+
+      <!-- Eyelids pulsing badge -->
+      <div class="eyelids-pulse" *ngIf="result.aiResult.eyelids">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+        </svg>
+        NEEDS EYELIDS
+      </div>
+
+      <!-- Material / Substrate / Lamination chips -->
+      <div class="ai-chips">
+        <span class="ai-chip ai-chip--material">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+          </svg>
+          {{ result.aiResult.material }}
+        </span>
+        <span class="ai-chip ai-chip--substrate" *ngIf="result.aiResult.substrate !== 'None'">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+          {{ result.aiResult.substrate }}
+        </span>
+        <span class="ai-chip ai-chip--lamination" *ngIf="result.aiResult.lamination !== 'None'">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          {{ result.aiResult.lamination }}
+        </span>
+      </div>
+
+      <!-- Alerts -->
+      <div class="ai-alerts" *ngIf="result.aiResult.alerts.length > 0">
+        <span class="ai-alert-tag" *ngFor="let alert of result.aiResult.alerts">
+          ⚠ {{ alert }}
+        </span>
+      </div>
+
+      <!-- Dims confirmed -->
+      <div class="ai-dims">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 3h18v18H3z"/>
+        </svg>
+        {{ result.aiResult.dims }}
+      </div>
+    </div>
+
+  </ng-container>
+</div>
+

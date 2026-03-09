@@ -1,0 +1,144 @@
+<!-- Toast -->
+<div class="toast" *ngIf="toastMessage()" [class.toast--error]="toastType() === 'error'">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+    <ng-container *ngIf="toastType() === 'success'">
+      <polyline points="20 6 9 17 4 12"/>
+    </ng-container>
+    <ng-container *ngIf="toastType() === 'error'">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </ng-container>
+  </svg>
+  {{ toastMessage() }}
+</div>
+
+<!-- Preview Modal -->
+<app-preview-modal
+  *ngIf="pendingUpload()"
+  [result]="pendingUpload()!"
+  (confirmed)="onModalConfirmed()"
+  (cancelled)="onModalCancelled()"
+/>
+
+<!-- App Shell -->
+<div class="app-shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar__brand">
+      <div class="brand__logo">
+        <svg viewBox="0 0 36 36" fill="none">
+          <rect width="36" height="36" rx="10" fill="url(#g1)"/>
+          <path d="M10 26 L18 10 L26 26" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M13 21h10" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="36" y2="36">
+              <stop offset="0%" stop-color="#4F8EF7"/>
+              <stop offset="100%" stop-color="#7C5CBF"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand__name">CDR Analyzer</h1>
+        <span class="brand__version">v1.0</span>
+      </div>
+    </div>
+
+    <nav class="sidebar__nav">
+      <div class="nav-section">
+        <span class="nav-section__label">Statistics</span>
+        <div class="stat-list">
+          <div class="stat-item">
+            <span class="stat-item__label">Total Files</span>
+            <span class="stat-item__value">{{ results().length }}</span>
+          </div>
+          <div class="stat-item stat-item--done">
+            <span class="stat-item__label">Analyzed</span>
+            <span class="stat-item__value">{{ doneCount() }}</span>
+          </div>
+          <div class="stat-item stat-item--error" *ngIf="errorCount() > 0">
+            <span class="stat-item__label">Errors</span>
+            <span class="stat-item__value">{{ errorCount() }}</span>
+          </div>
+          <div class="stat-item stat-item--danger" *ngIf="incompatibleCount() > 0">
+            <span class="stat-item__label">Incompatible</span>
+            <span class="stat-item__value">{{ incompatibleCount() }}</span>
+          </div>
+          <div class="stat-item stat-item--warn" *ngIf="mismatchCount() > 0">
+            <span class="stat-item__label">Dim Mismatch</span>
+            <span class="stat-item__value">{{ mismatchCount() }}</span>
+          </div>
+          <div class="stat-item stat-item--eyelid" *ngIf="eyelidCount() > 0">
+            <span class="stat-item__label">Needs Eyelids</span>
+            <span class="stat-item__value">{{ eyelidCount() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-section" style="margin-top:auto;">
+        <button class="sidebar__clear-btn" (click)="clearAll()" *ngIf="results().length > 0">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+            <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+          </svg>
+          Clear All
+        </button>
+      </div>
+    </nav>
+
+    <div class="sidebar__legend">
+      <span class="legend-item"><span class="legend-dot legend-dot--ok"></span> Compatible ≥ v17</span>
+      <span class="legend-item"><span class="legend-dot legend-dot--err"></span> Incompatible &lt; v17</span>
+      <span class="legend-item"><span class="legend-dot legend-dot--warn"></span> Needs Eyelids (R)</span>
+      <span class="legend-item"><span class="legend-dot legend-dot--mis"></span> Dim Mismatch</span>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content">
+    <!-- Header -->
+    <header class="page-header">
+      <div>
+        <h2 class="page-header__title">CorelDRAW File Analysis Dashboard</h2>
+        <p class="page-header__sub">Client-side processing · Web Worker powered · Zero full-file upload without confirmation</p>
+      </div>
+    </header>
+
+    <!-- Drop Zone -->
+    <section class="section">
+      <app-drop-zone (filesSelected)="onFilesSelected($event)" />
+    </section>
+
+    <!-- Results Grid -->
+    <section class="section" *ngIf="results().length > 0">
+      <div class="section-title-row">
+        <h3 class="section-title">Analysis Results</h3>
+        <span class="section-count">{{ results().length }} file{{ results().length !== 1 ? 's' : '' }}</span>
+      </div>
+      <div class="results-grid">
+        <app-file-card
+          *ngFor="let result of results(); trackBy: trackById"
+          [result]="result"
+          [progress]="getProgress(result.id)"
+          (sendSummary)="onSendSummary($event)"
+          (uploadFile)="onUploadFile($event)"
+          (removeCard)="onRemoveCard($event)"
+        />
+      </div>
+    </section>
+
+    <!-- Empty state -->
+    <div class="empty-state" *ngIf="results().length === 0">
+      <div class="empty-state__icon">
+        <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="40" cy="40" r="38" stroke="currentColor" stroke-width="2" stroke-dasharray="6 4" opacity="0.3"/>
+          <path d="M28 52 L40 28 L52 52" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>
+          <path d="M32 46h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
+        </svg>
+      </div>
+      <p class="empty-state__text">Drop some <strong>.cdr</strong> files above to begin analysis</p>
+      <p class="empty-state__hint">Files are processed in your browser using Web Workers. No data leaves your machine without explicit confirmation.</p>
+    </div>
+
+  </main>
+</div>
