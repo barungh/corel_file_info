@@ -38,6 +38,7 @@ self.addEventListener('message', async (event) => {
     let numPages = 0;
     let rawWidth = 0;
     let rawHeight = 0;
+    let extractedMeta: any = {};
 
     if (metadataFile) {
       const xmlStr = await metadataFile.async('string');
@@ -72,6 +73,8 @@ self.addEventListener('message', async (event) => {
       console.group('--- CDR Metadata Extraction ---');
       console.dir(rawMetadata);
       console.groupEnd();
+      
+      extractedMeta = rawMetadata;
 
       appVersion = rawMetadata.softwareInfo.appVersion || 'Unknown';
       numPages = parseInt(rawMetadata.physicalSpecs.numPages || '0', 10);
@@ -143,6 +146,14 @@ self.addEventListener('message', async (event) => {
       widthFeet,
       heightFeet,
       previewBase64,
+      lastAuthor: extractedMeta?.fileIdentity?.lastAuthor || '',
+      uuid: extractedMeta?.fileIdentity?.uuid || '',
+      createdDate: extractedMeta?.timestamps?.createDate || '',
+      modifyDate: extractedMeta?.timestamps?.modifyDate || '',
+      bitmapCount: parseInt(extractedMeta?.objectStats?.bitmap || '0', 10),
+      curveCount: parseInt(extractedMeta?.objectStats?.curve || '0', 10),
+      totalObjects: parseInt(extractedMeta?.objectStats?.total || '0', 10),
+      fileSizeBytes: arrayBuffer.byteLength,
     };
 
     self.postMessage({

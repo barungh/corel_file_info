@@ -39,6 +39,14 @@ class FileSummary(BaseModel):
     dimension_mismatch: bool
     filename_dims: Optional[str] = None
     metadata_dims: Optional[str] = None
+    last_author: Optional[str] = None
+    uuid: Optional[str] = None
+    created_date: Optional[str] = None
+    modify_date: Optional[str] = None
+    bitmap_count: Optional[int] = None
+    curve_count: Optional[int] = None
+    total_objects: Optional[int] = None
+    file_size_bytes: Optional[int] = None
 
 
 class AnalyzeRequest(BaseModel):
@@ -81,6 +89,20 @@ async def receive_summary(summary: FileSummary):
     """Accept a lightweight JSON summary of a processed CDR file."""
     record = summary.model_dump()
     summaries_store.append(record)
+    
+    # ── Production Log ──
+    print("\n" + "="*50)
+    print("PRODUCTION LOG")
+    print("="*50)
+    print(f"Filename:      {summary.filename}")
+    print(f"Last Author:   {summary.last_author}")
+    print(f"UUID:          {summary.uuid}")
+    print(f"Creation Date: {summary.created_date}")
+    print(f"Modify Date:   {summary.modify_date}")
+    print(f"Total Objects: {summary.total_objects} (Bitmaps: {summary.bitmap_count}, Curves: {summary.curve_count})")
+    print(f"File Size:     {summary.file_size_bytes} bytes")
+    print("="*50 + "\n")
+
     return {
         "status": "received",
         "message": f"Summary for '{summary.filename}' stored successfully.",

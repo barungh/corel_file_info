@@ -74,6 +74,14 @@ export class CdrParserService {
       previewUrl: workerResult.previewBase64
         ? `data:image/png;base64,${workerResult.previewBase64}`
         : null,
+      lastAuthor: workerResult.lastAuthor,
+      uuid: workerResult.uuid,
+      createdDate: workerResult.createdDate,
+      modifyDate: workerResult.modifyDate,
+      bitmapCount: workerResult.bitmapCount,
+      curveCount: workerResult.curveCount,
+      totalObjects: workerResult.totalObjects,
+      fileSizeBytes: workerResult.fileSizeBytes,
     };
 
     const filenameInfo = this.parseFilename(result.file.name);
@@ -143,6 +151,14 @@ export class CdrParserService {
         meta.widthInches > 0
           ? `${meta.widthInches.toFixed(2)}x${meta.heightInches.toFixed(2)}`
           : null,
+      last_author: meta.lastAuthor || '',
+      uuid: meta.uuid || '',
+      created_date: meta.createdDate || '',
+      modify_date: meta.modifyDate || '',
+      bitmap_count: meta.bitmapCount || 0,
+      curve_count: meta.curveCount || 0,
+      total_objects: meta.totalObjects || 0,
+      file_size_bytes: meta.fileSizeBytes || 0,
     };
   }
 }

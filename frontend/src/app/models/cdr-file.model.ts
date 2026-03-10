@@ -9,6 +9,14 @@ export interface CdrFileMeta {
   widthFeet: number;
   heightFeet: number;
   previewUrl: string | null;
+  lastAuthor?: string;
+  uuid?: string;
+  createdDate?: string;
+  modifyDate?: string;
+  bitmapCount?: number;
+  curveCount?: number;
+  totalObjects?: number;
+  fileSizeBytes?: number;
 }
 
 export interface FilenameInfo {
@@ -65,6 +73,14 @@ export interface FileSummaryDto {
   dimension_mismatch: boolean;
   filename_dims: string | null;
   metadata_dims: string | null;
+  last_author: string;
+  uuid: string;
+  created_date: string;
+  modify_date: string;
+  bitmap_count: number;
+  curve_count: number;
+  total_objects: number;
+  file_size_bytes: number;
 }
 
 export interface AnalyzeRequestDto {
