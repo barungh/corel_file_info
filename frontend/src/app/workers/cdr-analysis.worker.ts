@@ -28,6 +28,11 @@ self.addEventListener('message', async (event) => {
     const containerFile =
       zip.file('META-INF/container.xml') ||
       zip.file('meta-inf/container.xml');
+      
+    // --- Parse META-INF/textinfo.xml ---
+    const textinfoFile =
+      zip.file('META-INF/textinfo.xml') ||
+      zip.file('meta-inf/textinfo.xml');
 
     let appVersion = 'Unknown';
     let numPages = 0;
@@ -36,10 +41,50 @@ self.addEventListener('message', async (event) => {
 
     if (metadataFile) {
       const xmlStr = await metadataFile.async('string');
-      appVersion = extractXmlValue(xmlStr, 'cdr:AppVersion') || 'Unknown';
-      numPages = parseInt(extractXmlValue(xmlStr, 'cdrinfo:NumPages') || '0', 10);
+      
+      const rawMetadata = {
+        fileIdentity: {
+          author: extractXmlValue(xmlStr, 'dc:creator'),
+          lastAuthor: extractXmlValue(xmlStr, 'crl:LastAuthor'),
+          uuid: extractXmlValue(xmlStr, 'dc:identifier'),
+        },
+        timestamps: {
+          createDate: extractXmlValue(xmlStr, 'xmp:CreateDate'),
+          modifyDate: extractXmlValue(xmlStr, 'xmp:ModifyDate'),
+        },
+        softwareInfo: {
+          productName: extractXmlValue(xmlStr, 'cdr:ProductName'),
+          appVersion: extractXmlValue(xmlStr, 'cdr:AppVersion'),
+        },
+        physicalSpecs: {
+          pageDimensions: extractXmlValue(xmlStr, 'cdrinfo:PageDimensions'),
+          numPages: extractXmlValue(xmlStr, 'cdrinfo:NumPages'),
+          resolutionX: extractXmlValue(xmlStr, 'cdrinfo:ResolutionX'),
+          resolutionY: extractXmlValue(xmlStr, 'cdrinfo:ResolutionY'),
+        },
+        objectStats: {
+          total: extractXmlValue(xmlStr, 'inObj:Total'),
+          bitmap: extractXmlValue(xmlStr, 'inObj:Bitmap'),
+          curve: extractXmlValue(xmlStr, 'inObj:Curve'),
+        }
+      };
+
+      console.group('--- CDR Metadata Extraction ---');
+      console.dir(rawMetadata);
+      console.groupEnd();
+
+      appVersion = rawMetadata.softwareInfo.appVersion || 'Unknown';
+      numPages = parseInt(rawMetadata.physicalSpecs.numPages || '0', 10);
       rawWidth = parseFloat(extractXmlValue(xmlStr, 'cdrinfo:PageWidth') || '0');
       rawHeight = parseFloat(extractXmlValue(xmlStr, 'cdrinfo:PageHeight') || '0');
+    }
+    
+    if (textinfoFile) {
+      const textXmlStr = await textinfoFile.async('string');
+      console.group('--- CDR TextInfo Extraction ---');
+      console.log(`textinfo.xml size: ${textXmlStr.length} bytes`);
+      console.log(textXmlStr.substring(0, 500) + (textXmlStr.length > 500 ? '...' : ''));
+      console.groupEnd();
     }
 
     // Fallback: try container.xml if metadata.xml didn't have all fields
