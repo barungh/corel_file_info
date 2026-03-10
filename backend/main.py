@@ -61,6 +61,13 @@ class AiAnalysisResult(BaseModel):
 
 summaries_store: list[dict] = []
 
+def log_to_ledger(data: dict):
+    """
+    Placeholder function for financial logging. 
+    Will be replaced with PostgreSQL logic in the next phase.
+    """
+    print(f"Ledger Log: {json.dumps(data, indent=2)}")
+
 
 # ── Routes ───────────────────────────────────────────────────────────────────
 
@@ -93,36 +100,7 @@ async def analyze_file(req: AnalyzeRequest):
     Send file metadata to Ollama print-expert model and return structured
     print production analysis.
     """
-    has_eyelids_hint = "(R)" in req.filename
-    # Parse WxH from filename if present
-    import re
-    dim_match = re.search(r"(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)", req.filename, re.IGNORECASE)
-    filename_dims_hint = f"{dim_match.group(1)}x{dim_match.group(2)}" if dim_match else req.metadata_dims
-
-    prompt = f"""You are a print production expert. Analyze this CorelDRAW print job and return a JSON object.
-
-File details:
-- Filename: {req.filename}
-- Dimensions from filename: {filename_dims_hint} inches
-- Dimensions from metadata: {req.metadata_dims} inches
-- Page count in file: {req.page_count}
-- Finishing flag "(R)" present: {has_eyelids_hint}
-
-Rules for total_qty:
-- If page_count is 1: the job is "1pc each" (single-sided, qty = number of pieces ordered, infer from filename context)
-- If page_count > 1: total prints = page_count (each page is a unique print side or variation)
-- Express total_qty as a human-readable string like "4 prints" or "1pc each"
-
-Return ONLY a valid JSON object with these exact keys:
-{{
-  "dims": "<W>x<H> inches",
-  "material": "<print material, e.g. Eco Vinyl, Backlit Film, Canvas>",
-  "total_qty": "<quantity string>",
-  "eyelids": <true if (R) flag present or job requires finishing eyelids, else false>,
-  "substrate": "<mounting substrate, e.g. 5mm Sunboard, 3mm Acrylic, None>",
-  "lamination": "<lamination type, e.g. Gloss, Matte, None>",
-  "alerts": [<list of any production warnings as strings, empty array if none>]
-}}"""
+    prompt = f"Analyze this filename: '{req.filename}' with {req.page_count} pages. Return JSON."
 
     ollama_payload = {
         "model": "print-expert",
@@ -159,16 +137,19 @@ Return ONLY a valid JSON object with these exact keys:
             detail=f"Ollama returned invalid JSON: {raw_response[:200]}",
         )
 
-    # Normalise and validate fields with safe defaults
-    return AiAnalysisResult(
-        dims=str(parsed.get("dims", req.metadata_dims)),
-        material=str(parsed.get("material", "Unknown")),
-        total_qty=str(parsed.get("total_qty", f"{req.page_count} prints")),
-        eyelids=bool(parsed.get("eyelids", has_eyelids_hint)),
-        substrate=str(parsed.get("substrate", "None")),
-        lamination=str(parsed.get("lamination", "None")),
+    # Ensure mapping strictly uses the keys returned by the model
+    result = AiAnalysisResult(
+        dims=str(parsed.get("dims", "")),
+        material=str(parsed.get("material", "")),
+        total_qty=str(parsed.get("total_qty", "")),
+        eyelids=bool(parsed.get("eyelids", False)),
+        substrate=str(parsed.get("substrate", "")),
+        lamination=str(parsed.get("lamination", "")),
         alerts=[str(a) for a in parsed.get("alerts", [])],
     )
+    
+    log_to_ledger(result.model_dump())
+    return result
 
 
 @app.post("/api/upload")
