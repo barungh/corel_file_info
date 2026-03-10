@@ -5,7 +5,7 @@ import { FileSummaryDto, AnalyzeRequestDto, AiAnalysisResult } from '../models/c
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly BASE = 'http://localhost:8000';
+  private readonly BASE = '';
 
   constructor(private http: HttpClient) {}
 
